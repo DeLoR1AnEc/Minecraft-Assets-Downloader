@@ -138,7 +138,7 @@ def main(argv):
 		
 		elif key == 'H' and selected_index > 0:
 			selected_index -= 1
-		elif key == 'P' and selected_index < len(filtered_versions):
+		elif key == 'P' and selected_index < len(filtered_versions) - 1:
 			selected_index += 1
 		elif key.lower() == 'f':
 			search_mode = True
