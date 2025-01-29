@@ -7,7 +7,14 @@ Also make sure that you have python and pip installed and that you downloaded de
 py -m pip install -r requirements.txt
 ```
 
-Run the script with
+Run the script in its directory with
 ```
 py .\main.py
 ```
+
+
+Or
+```
+py .\main.py <version id like 25w05a or 1.21.2-pre1 etc>
+```
+to download it without navigating scary ascii interface.
