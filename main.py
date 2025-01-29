@@ -132,20 +132,25 @@ def main(argv):
 				update_filter()
 			if key == '\b':
 				search_query = search_query[:-1]
-			if key.isprintable():
+			if key.isprintable() and not (key in {'P', 'H'}):
 				search_query += key
 				update_filter()
+			if key == 'H' and selected_index > 0:
+				selected_index -= 1
+			if key == 'P' and selected_index < len(filtered_versions) - 1:
+				selected_index += 1
+			
 		
-		elif key == 'H' and selected_index > 0:
+		if key == 'H' and selected_index > 0:
 			selected_index -= 1
-		elif key == 'P' and selected_index < len(filtered_versions) - 1:
+		if key == 'P' and selected_index < len(filtered_versions) - 1:
 			selected_index += 1
-		elif key.lower() == 'f':
+		if key.lower() == 'f':
 			search_mode = True
-		elif key in {'\r', '\n'}:
+		if key in {'\r', '\n'}:
 			download(filtered_versions[selected_index])
 			break
-		elif key == '\x1b':
+		if key == '\x1b':
 			print("Exiting...")
 			break
 
