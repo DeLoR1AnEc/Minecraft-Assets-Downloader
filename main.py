@@ -103,7 +103,8 @@ def download(id):
 
 	print("Extracting assets and data...")
 	extract_folders(jar_path, version_folder)
-
+	os.remove(jar_path)
+	
 	print("Done!")
 
 
