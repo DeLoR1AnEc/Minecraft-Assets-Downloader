@@ -4,6 +4,7 @@ import msvcrt
 import requests
 from pathlib import Path
 import json
+import sys
 
 _RESET = "\033[0m"
 _HIGHLIGHT = "\033[30;103m"
@@ -90,6 +91,10 @@ def download(id):
 	output_dir.mkdir(exist_ok=True)
 	
 	version_info = next((v for v in manifest["versions"] if v["id"] == id), None)
+	if not version_info:
+		print("Snapshot not found in versions list.")
+		return
+	
 	version_data = requests.get(version_info["url"]).json()
 	jar_url = version_data["downloads"]["client"]["url"]
 
@@ -104,13 +109,17 @@ def download(id):
 	print("Extracting assets and data...")
 	extract_folders(jar_path, version_folder)
 	os.remove(jar_path)
-	
+
 	print("Done!")
 
 
 
-def main():
+def main(argv):
 	global selected_index, search_mode, search_query
+
+	if len(argv) > 1:
+		download(argv[1])
+		return
 	
 	draw()
 
@@ -143,4 +152,4 @@ def main():
 		draw()
 
 if __name__ == "__main__":
-	main()
+	main(sys.argv)
