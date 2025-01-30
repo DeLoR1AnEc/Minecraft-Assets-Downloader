@@ -18,3 +18,5 @@ Or
 py .\main.py <version id like 25w05a or 1.21.2-pre1 etc>
 ```
 to download it without navigating scary ascii interface.
+
+If you want prebuild version you can find it in `dist` directory
