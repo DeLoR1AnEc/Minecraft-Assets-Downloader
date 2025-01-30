@@ -1,10 +1,15 @@
 import os
 from zipfile import ZipFile
-import msvcrt
 import requests
 from pathlib import Path
 import json
 import sys
+
+if os.name == 'nt':
+  import msvcrt
+else:
+  import tty
+  import termios
 
 _RESET = "\033[0m"
 _HIGHLIGHT = "\033[30;103m"
@@ -35,6 +40,28 @@ def get_key():
 	if key in {b'\xe0', b'\x00'}:  # Arrow keys pref
 		key = msvcrt.getch()
 	return key.decode('utf-8', errors='ignore')
+	
+def get_key2():
+    if os.name == 'nt':
+      key = msvcrt.getch()
+      if key in {b'\xe0', b'\x00'}:
+        key = msvcrt.getch()
+      return key.decode('utf-8', errors='ignore')
+    else:
+      fd = sys.stdin.fileno()
+      old_settings = termios.tcgetattr(fd)
+      try:
+        tty.setraw(fd)
+          key = sys.stdin.read(1)
+          if key == '\x1b':
+            next1 = sys.stdin.read(1)
+            if next1 == '[':
+              next2 = sys.stdin.read(1)
+              return f'\x1b[{next2}]
+            return key
+        finally:
+          termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return key
 
 def clear_screen():
 	os.system('cls')
@@ -60,12 +87,6 @@ def draw():
 		else:
 			print(f"    {filtered_versions[i]}")
 
-	#for i, version in enumerate(filtered_versions):
-	#	if i == selected_index:
-	#		print(f"{_HIGHLIGHT}   {version}   {_RESET}")
-	#	else:
-	#		print(f"    {version}    ")
-	
 	print("+-----------------+")
 
 def update_filter():
@@ -125,35 +146,33 @@ def main(argv):
 
 	while True:
 		key = get_key()
+		
+		if selected_index > 0 and key in {'\x1b[A', 'H'}:
+		  selected_index -= 1
+		if selected_index < len(filtered_versions) - 1 and key in {'\x1b[B', 'P'}:
+		  selected_index += 1
+		
 		if search_mode:
 			if key == '\x1b':
 				search_mode = False
 				search_query = ""
 				update_filter()
-			if key == '\b':
+			if key in {'\b', '\x7f'}:
 				search_query = search_query[:-1]
-			if key.isprintable() and not (key in {'P', 'H'}):
+			if key.isprintable() and not (key in {'P', 'H', '\x1b[A', '\x1b[B'}):
 				search_query += key
 				update_filter()
-			if key == 'H' and selected_index > 0:
-				selected_index -= 1
-			if key == 'P' and selected_index < len(filtered_versions) - 1:
-				selected_index += 1
 			
 		else:
-		  if key == 'H' and selected_index > 0:
-			  selected_index -= 1
-		  if key == 'P' and selected_index <   len(filtered_versions) - 1:
-			  selected_index += 1
 		  if key.lower() == 'f':
 			  search_mode = True
-		  if key in {'\r', '\n'}:
-			  download(filtered_versions[selected_index])
-			  break
 		  if key == '\x1b':
 			  print("Exiting...")
-			  break
-
+			  
+		if key in {'\r', '\n'}:
+		  download(filtered_versions[selected_index])
+		  break
+		
 		draw()
 
 if __name__ == "__main__":
