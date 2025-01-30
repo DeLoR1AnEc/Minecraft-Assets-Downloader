@@ -140,19 +140,19 @@ def main(argv):
 			if key == 'P' and selected_index < len(filtered_versions) - 1:
 				selected_index += 1
 			
-		
-		if key == 'H' and selected_index > 0:
-			selected_index -= 1
-		if key == 'P' and selected_index < len(filtered_versions) - 1:
-			selected_index += 1
-		if key.lower() == 'f':
-			search_mode = True
-		if key in {'\r', '\n'}:
-			download(filtered_versions[selected_index])
-			break
-		if key == '\x1b':
-			print("Exiting...")
-			break
+		else:
+		  if key == 'H' and selected_index > 0:
+			  selected_index -= 1
+		  if key == 'P' and selected_index <   len(filtered_versions) - 1:
+			  selected_index += 1
+		  if key.lower() == 'f':
+			  search_mode = True
+		  if key in {'\r', '\n'}:
+			  download(filtered_versions[selected_index])
+			  break
+		  if key == '\x1b':
+			  print("Exiting...")
+			  break
 
 		draw()
 
