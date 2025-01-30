@@ -14,9 +14,19 @@ else:
 _RESET = "\033[0m"
 _HIGHLIGHT = "\033[30;103m"
 
-def get_config(path):
-	with open(Path("config.json"), "r") as f:
-		return json.load(f).get(path)
+DEFAULT_CONFIG = {
+	"manifest_url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+	"window_size": 15,
+	"output_dir": "versions"
+}
+
+def get_config(key):
+	config = Path("config.json")
+	if config.exists():
+		with open(Path("config.json"), "r") as f:
+			return json.load(f).get(key)
+	else:
+		return DEFAULT_CONFIG.get(key)
 
 WINDOW_SIZE = get_config("window_size")
 
