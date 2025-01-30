@@ -87,7 +87,7 @@ def draw():
 	
 	for i in range(start_index, end_index):
 		if i == selected_index:
-			print(f"{_HIGHLIGHT}   {filtered_versions[i]}   {_RESET}")
+			print(f"    {_HIGHLIGHT}{filtered_versions[i]}{_RESET}")
 		else:
 			print(f"    {filtered_versions[i]}")
 
