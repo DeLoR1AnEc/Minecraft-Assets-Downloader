@@ -19,4 +19,6 @@ py .\main.py <version id like 25w05a or 1.21.2-pre1 etc>
 ```
 to download it without navigating scary ascii interface.
 
-If you want prebuilt version you can find it in `dist` directory
+If you want to download sounds, fonts or icons select Y when prompted to download hashed assets.
+
+You can find prebuilt version in `dist` directory or in git releases
