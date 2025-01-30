@@ -4,6 +4,7 @@ import requests
 from pathlib import Path
 import json
 import sys
+import time
 
 if os.name == 'nt':
 	import msvcrt
@@ -16,6 +17,7 @@ _HIGHLIGHT = "\033[30;103m"
 
 DEFAULT_CONFIG = {
 	"manifest_url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+	"hashes_base_url": "https://resources.download.minecraft.net/",
 	"window_size": 15,
 	"output_dir": "versions"
 }
@@ -30,13 +32,12 @@ def get_config(key):
 
 WINDOW_SIZE = get_config("window_size")
 
-def fetch_version_manifest():
-	url = get_config("manifest_url")
+def fetch_piston_meta(url):
 	response = requests.get(url)
 	response.raise_for_status()
 	return response.json()
 
-manifest = fetch_version_manifest()
+manifest = fetch_piston_meta(get_config("manifest_url"))
 
 versions = [v["id"] for v in manifest["versions"]]
 
@@ -65,7 +66,18 @@ def get_key():
 				return key
 		finally:
 			termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-			
+
+def ask(msg):
+	print(f"{msg} Y(yes) / N(no)\n")
+	while True:
+		key = get_key()
+		match key.lower():
+			case 'n':
+				return False
+			case 'y':
+				return True
+			case _:
+				continue
 
 def clear_screen():
 	os.system('cls')
@@ -98,10 +110,17 @@ def update_filter():
 	filtered_versions = [v for v in versions if search_query in v]
 	selected_index = 0 if filtered_versions else -1
 
-def download_version(version_url, download_dir):
-	response = requests.get(version_url, stream=True)
+def download_url(url, download_path):
+	response = requests.get(url, stream=True)
+	if response.status_code == 429:
+		reset_time = int(response.headers.get('X-RateLimit-Reset', time.time()))
+		wait_time = reset_time - int(time.time())
+		print(f"Rate limit exceeded. Waiting for {wait_time} seconds.")
+		time.sleep(wait_time)
+		download_url(url)
 	response.raise_for_status()
-	with open(download_dir, "wb") as f:
+	download_path.parent.mkdir(exist_ok=True, parents=True)
+	with open(download_path, "wb") as f:
 		for chunk in response.iter_content(chunk_size=8192):
 			f.write(chunk)
 
@@ -111,7 +130,15 @@ def extract_folders(jar_path, extract_dir):
 		for file in files:
 			jar.extract(file, extract_dir)
 
+def copy_assets(url, dir):
+	hashes = fetch_piston_meta(url)
+
+	for asset, data in hashes["objects"].items():
+		download_url(f"{get_config("hashes_base_url")}/{data["hash"][:2]}/{data["hash"]}", dir / "assets" / asset)
+
 def download(id):
+	hashed_selected = ask("Do you want to download hashed resources?")
+
 	output_dir = Path(get_config("output_dir"))
 	output_dir.mkdir(exist_ok=True)
 	
@@ -120,24 +147,31 @@ def download(id):
 		print("Snapshot not found in versions list.")
 		return
 	
-	version_data = requests.get(version_info["url"]).json()
+	version_data = fetch_piston_meta(version_info["url"])
 	jar_url = version_data["downloads"]["client"]["url"]
 
-	version_folder = output_dir / id
-	version_folder.mkdir(exist_ok=True)
+	version_dir = output_dir / id
+	version_dir.mkdir(exist_ok=True)
 
-	jar_path = version_folder / f"{id}.jar"
+	jar_path = version_dir / f"{id}.jar"
+
+	time_start = time.time()
 
 	print(f"Downloading {id}...")
-	download_version(jar_url, jar_path)
+	download_url(jar_url, jar_path)
 
 	print("Extracting assets and data...")
-	extract_folders(jar_path, version_folder)
+	extract_folders(jar_path, version_dir)
 	os.remove(jar_path)
+
+	if hashed_selected:
+		print("Copying hashed assets...")
+		copy_assets(version_data["assetIndex"]["url"], version_dir)
 
 	print("Done!")
 
-
+	time_end = time.time()
+	print(f"Elapsed time: {(time_end - time_start):.2f} seconds.")
 
 def main(argv):
 	global selected_index, search_mode, search_query

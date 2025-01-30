@@ -1,5 +1,6 @@
 {
 	"manifest_url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+	"hashes_base_url": "https://resources.download.minecraft.net/",
 	"window_size": 15,
 	"output_dir": "versions"
 }
