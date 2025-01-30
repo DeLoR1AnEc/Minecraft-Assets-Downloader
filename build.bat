@@ -1,0 +1,1 @@
+py -m PyInstaller -F .\main.py --distpath ./executable --clean -n mcal
