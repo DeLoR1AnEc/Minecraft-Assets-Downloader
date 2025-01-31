@@ -64,11 +64,12 @@ def get_key():
 					next2 = sys.stdin.read(1)
 					return f'\x1b[{next2}]'
 				return key
+			return key
 		finally:
 			termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 def ask(msg):
-	print(f"{msg} Y(yes) / N(no)\n")
+	print(f"{msg} [Y/n]\n")
 	while True:
 		key = get_key()
 		match key.lower():
@@ -76,6 +77,12 @@ def ask(msg):
 				return False
 			case 'y':
 				return True
+			case '\r':
+				return True
+			case '\n':
+				return True
+			case '\x1b':
+				return 1
 			case _:
 				continue
 
@@ -138,6 +145,8 @@ def copy_assets(url, dir):
 
 def download(id):
 	hashed_selected = ask("Do you want to download hashed resources?")
+	if hashed_selected == 1:
+		return 1
 
 	output_dir = Path(get_config("output_dir"))
 	output_dir.mkdir(exist_ok=True)
@@ -207,9 +216,11 @@ def main(argv):
 			if key == '\x1b':
 				print("Exiting...")
 				break
-			if key in {'\r', '\n'}:
-				download(filtered_versions[selected_index])
-				break
+		
+		if key in {'\r', '\n'}:
+			if download(filtered_versions[selected_index]):
+				print("Exiting...")
+			break
 		
 		draw()
 
