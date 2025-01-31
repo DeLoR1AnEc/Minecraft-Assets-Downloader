@@ -207,9 +207,10 @@ def main(argv):
 			if key == '\x1b':
 				print("Exiting...")
 				break
-			if key in {'\r', '\n'}:
-				download(filtered_versions[selected_index])
-				break
+				
+		if key in {'\r', '\n'}:
+			download(filtered_versions[selected_index])
+			break
 		
 		draw()
 
